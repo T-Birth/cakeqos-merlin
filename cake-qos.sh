@@ -80,8 +80,8 @@ Display_Line(){
 }
 
 Cake_CheckStatus(){
-	STATUS_UPLOAD=$(tc qdisc | grep -E '^qdisc cake .* dev eth0 root')
-	STATUS_DOWNLOAD=$(tc qdisc | grep -E '^qdisc cake .* dev ifb9eth0 root')
+	STATUS_UPLOAD=$(tc qdisc | grep -E '^qdisc cake .* dev eth4 root')
+	STATUS_DOWNLOAD=$(tc qdisc | grep -E '^qdisc cake .* dev ifb9eth4 root')
 	if [ -n "$STATUS_UPLOAD" ] && [ -n "$STATUS_DOWNLOAD" ]; then
 		return 0
 	else
@@ -251,24 +251,24 @@ Cake_Start(){
 	nvram set fc_disable="1"
 	nvram commit
 	insmod /opt/lib/modules/sch_cake.ko 2>/dev/null
-	/opt/sbin/tc qdisc replace dev eth0 root cake bandwidth "${upspeed}Mbit" nat "$queueprio" $optionsup # options needs to be left unquoted to support multiple extra parameters
-	ip link add name ifb9eth0 type ifb
-	/opt/sbin/tc qdisc del dev eth0 ingress 2>/dev/null
-	/opt/sbin/tc qdisc add dev eth0 handle ffff: ingress
-	/opt/sbin/tc qdisc del dev ifb9eth0 root 2>/dev/null
-	/opt/sbin/tc qdisc add dev ifb9eth0 root cake bandwidth "${dlspeed}Mbit" nat wash ingress "$queueprio" $optionsdl # options needs to be left unquoted to support multiple extra parameters
-	ifconfig ifb9eth0 up
-	/opt/sbin/tc filter add dev eth0 parent ffff: protocol all prio 10 u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ifb9eth0
+	/opt/sbin/tc qdisc replace dev eth4 root cake bandwidth "${upspeed}Mbit" nat "$queueprio" $optionsup # options needs to be left unquoted to support multiple extra parameters
+	ip link add name ifb9eth4 type ifb
+	/opt/sbin/tc qdisc del dev eth4 ingress 2>/dev/null
+	/opt/sbin/tc qdisc add dev eth4 handle ffff: ingress
+	/opt/sbin/tc qdisc del dev ifb9eth4 root 2>/dev/null
+	/opt/sbin/tc qdisc add dev ifb9eth4 root cake bandwidth "${dlspeed}Mbit" nat wash ingress "$queueprio" $optionsdl # options needs to be left unquoted to support multiple extra parameters
+	ifconfig ifb9eth4 up
+	/opt/sbin/tc filter add dev eth4 parent ffff: protocol all prio 10 u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ifb9eth4
 }
 
 Cake_Stop(){
 	if Cake_CheckStatus; then
 		Print_Output "true" "Stopping" "$PASS"
 		cru d "$SCRIPT_NAME_FANCY"
-		/opt/sbin/tc qdisc del dev eth0 ingress 2>/dev/null
-		/opt/sbin/tc qdisc del dev ifb9eth0 root 2>/dev/null
-		/opt/sbin/tc qdisc del dev eth0 root 2>/dev/null
-		ip link del ifb9eth0
+		/opt/sbin/tc qdisc del dev eth4 ingress 2>/dev/null
+		/opt/sbin/tc qdisc del dev ifb9eth4 root 2>/dev/null
+		/opt/sbin/tc qdisc del dev eth4 root 2>/dev/null
+		ip link del ifb9eth4
 		rmmod sch_cake 2>/dev/null
 		runner enable
 		fc enable
@@ -512,10 +512,10 @@ case $1 in
 		if Cake_CheckStatus; then
 			case "$2" in
 				download)
-					tc -s qdisc show dev ifb9eth0
+					tc -s qdisc show dev ifb9eth4
 				;;
 				upload)
-					tc -s qdisc show dev eth0
+					tc -s qdisc show dev eth4
 				;;
 				general)
 					Print_Output "false" "> Download Status:" "$PASS"
